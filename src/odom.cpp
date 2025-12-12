@@ -21,11 +21,11 @@ static constexpr double ROBOT_LENGTH_CM = 37.0;
 static constexpr double ROBOT_CENTER_X = ROBOT_WIDTH_CM / 2.0;
 static constexpr double ROBOT_CENTER_Y = ROBOT_LENGTH_CM / 2.0;
 
-// Tracking wheel positions
-static constexpr double HORIZ_POS_X = 19.0;
-static constexpr double HORIZ_POS_Y = 10.5;
-static constexpr double VERT_POS_X  = 16.5;
-static constexpr double VERT_POS_Y  = 15.0;
+// Tracking wheel positions (relative to the bottom-left corner of the robot)
+static constexpr double HORIZ_POS_X = 19.0; // Horizontal encoder's x position
+static constexpr double HORIZ_POS_Y = 10.5; // Horizontal encoder's y position
+static constexpr double VERT_POS_X  = 16.5; // Vertical encoder's x position
+static constexpr double VERT_POS_Y  = 15.0; // Vertical encoder's y position
 
 // Internal state
 static double globalX = 0.0;
@@ -35,10 +35,11 @@ static double thetaDeg = 0.0;
 static double prevHorizDeg = 0.0;
 static double prevVertDeg  = 0.0;
 
-// Offsets from robot center
-static const double horiz_offset_x = HORIZ_POS_X - ROBOT_CENTER_X;
-static const double horiz_offset_y = HORIZ_POS_Y - ROBOT_CENTER_Y;
-static const double vert_offset_x  = VERT_POS_X  - ROBOT_CENTER_X;
+// Offsets from the robot center
+static const double horiz_offset_x = HORIZ_POS_X - ROBOT_CENTER_X; // Adjusted for center
+static const double horiz_offset_y = HORIZ_POS_Y - ROBOT_CENTER_Y; // Adjusted for center
+static const double vert_offset_x  = VERT_POS_X  - ROBOT_CENTER_X; // Adjusted for center
+static const double vert_offset_y  = VERT_POS_Y  - ROBOT_CENTER_Y; // Added for completeness
 
 pros::Mutex odomMutex; // Define the mutex for thread safety
 
@@ -113,6 +114,9 @@ void odom::update() {
 double odom::getX() { return globalX; }
 double odom::getY() { return globalY; }
 double odom::getTheta() { return thetaDeg; }
+double odom::getXmm() { return globalX * 10.0; } // Convert to millimeters
+double odom::getYmm() { return globalY * 10.0; } // Convert to millimeters
+double odom::getThetaDisplacement() { return thetaDeg; } // Theta displacement from start
 
 void odom::setPosition(double x, double y, double theta) {
     odomMutex.take(); // Lock the mutex
