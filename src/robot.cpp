@@ -55,45 +55,37 @@ namespace robot {
         rightBack.move(0);
     }
 
-    void drive(int speed, int duration) {
-        // Reduce speed for slower movement
-        int reducedSpeed = speed / 2;
+    void drive(double distanceCm, int speed) {
+        const double wheelDiameterCm = 5.6; // Adjust based on your robot's wheel diameter
+        const double wheelCircumferenceCm = wheelDiameterCm * M_PI;
+        const double degreesPerCm = 360.0 / wheelCircumferenceCm;
+        
 
-        // Set motor directions
+        double targetDegrees = distanceCm * degreesPerCm;
+
+        leftTop.tare_position();
+        rightTop.tare_position();
+
+        leftTop.move_relative(targetDegrees, speed);
+        leftMiddle.move_relative(targetDegrees, speed);
+        leftBack.move_relative(targetDegrees, speed);
+        rightTop.move_relative(targetDegrees, speed);
+        rightMiddle.move_relative(targetDegrees, speed);
+        rightBack.move_relative(targetDegrees, speed);
         leftTop.set_reversed(false);
         leftMiddle.set_reversed(true);
         leftBack.set_reversed(true);
+
         rightTop.set_reversed(true);
         rightMiddle.set_reversed(false);
         rightBack.set_reversed(false);
 
-        // Move motors at reduced speed
-        leftTop.move(reducedSpeed);
-        leftMiddle.move(reducedSpeed);
-        leftBack.move(reducedSpeed);
-        rightTop.move(reducedSpeed);
-        rightMiddle.move(reducedSpeed);
-        rightBack.move(reducedSpeed);
+        while (std::fabs(leftTop.get_position()) < std::fabs(targetDegrees) ||
+               std::fabs(rightTop.get_position()) < std::fabs(targetDegrees)) {
+            pros::delay(10); // Wait until the target position is reached
+        }
 
-        // Delay for the specified duration
-        pros::delay(duration);
-
-        // Apply braking
-        leftTop.move(-10);
-        leftMiddle.move(-10);
-        leftBack.move(-10);
-        rightTop.move(-10);
-        rightMiddle.move(-10);
-        rightBack.move(-10);
-        pros::delay(100); // Short brake duration
-
-        // Stop motors
-        leftTop.move(0);
-        leftMiddle.move(0);
-        leftBack.move(0);
-        rightTop.move(0);
-        rightMiddle.move(0);
-        rightBack.move(0);
+        stop(); // Stop the robot after reaching the target
     }
 
     void intake(int speed) {
@@ -101,7 +93,8 @@ namespace robot {
         intakeMiddle.move(-speed);
         intakeBottom.move(-speed);
     }
-    void turnDegrees(double degrees, int speed = 60) {
+
+    void turnDegrees(double degrees, int speed) {
         double targetAngle = odom::getTheta() + degrees;
 
         // Normalize target angle to [-180, 180]
@@ -127,6 +120,29 @@ namespace robot {
         stop(); // Stop the robot after turning
     }
 
+    void drive(int speed, int duration) {
+        // Set motor directions
+        leftTop.set_reversed(false);
+        leftMiddle.set_reversed(true);
+        leftBack.set_reversed(true);
+        rightTop.set_reversed(true);
+        rightMiddle.set_reversed(false);
+        rightBack.set_reversed(false);
+
+        // Move motors at the specified speed
+        leftTop.move(speed);
+        leftMiddle.move(speed);
+        leftBack.move(speed);
+        rightTop.move(speed);
+        rightMiddle.move(speed);
+        rightBack.move(speed);
+
+        // Delay for the specified duration
+        pros::delay(duration);
+
+        // Stop motors
+        stop();
+    }
 }
 
 // === Operator Control (Drivetrain Test) ===
@@ -172,7 +188,7 @@ void robotOpcontrol() {
             solenoidC.set_value(solenoidStateC);
         }
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) { // Top Outtake
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) { // Middle Outtake
             if (isUnderTension) {
                 outtakeRear.move(127); // Reverse outtakeRear
                 intakeBottom.move(127); // Reverse intakeBottom
@@ -181,9 +197,9 @@ void robotOpcontrol() {
                 intakeMiddle.move(-127);
                 intakeBottom.move(-127);
                 outtakeRear.move(-127);
+                solenoidA.set_value(true);
             }
-            solenoidA.set_value(false);
-        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) { // Middle Outtake
+        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) { // Top Outtake
             if (isUnderTension) {
                 outtakeRear.move(127); // Reverse outtakeRear
                 intakeBottom.move(127); // Reverse intakeBottom
@@ -192,9 +208,9 @@ void robotOpcontrol() {
                 intakeMiddle.move(-127);
                 intakeBottom.move(-127);
                 outtakeRear.move(-127);
+                solenoidA.set_value(false);
             }
-            solenoidA.set_value(false);
-        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) { // Lower Outtake
+        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) { // Lower Outtake
             if (isUnderTension) {
                 outtakeRear.move(127); // Reverse outtakeRear
                 intakeBottom.move(127); // Reverse intakeBottom
@@ -203,8 +219,8 @@ void robotOpcontrol() {
                 intakeMiddle.move(-127);
                 intakeBottom.move(127);
                 outtakeRear.move(-127);
+                solenoidA.set_value(true);
             }
-            solenoidA.set_value(false);
         } else { // Automatic Intake
             intakeTop.move(-127); // Adjust the power as needed
             intakeMiddle.move(-127);

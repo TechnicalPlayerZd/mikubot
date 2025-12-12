@@ -34,8 +34,11 @@ void robotInitialize();
 
 namespace robot {
     void drive(double leftPower, double rightPower); // Declare drive function
-    void stop(); // Declare stop function
     void drive(int speed, int duration); // Drive function without PID
+    void drive(double distanceCm, int speed); // Drive function for distance in cm
+    void intake(int speed); // Declare intake function
+    void stop(); // Declare stop function
+    void turnDegrees(double degrees, int speed = 60); // Declare turnDegrees function
 }
 
 #endif  // _ROBOT_HPP_
