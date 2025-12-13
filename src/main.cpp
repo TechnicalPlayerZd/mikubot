@@ -20,12 +20,12 @@ void competition_initialize() {
 
 // Define the autonomous function
 void autonomous() {
-    robot::autonomous(); // Correctly call the autonomous function from the robot namespace
+    // robot::autonomous(); // Correctly call the autonomous function from the robot namespace
 }
 
 // Operator control function
 void opcontrol() {
   // Call the renamed robotOpcontrol function
-  // robot::autonomous();
+  / robot::autonomous();
   robotOpcontrol();
 }

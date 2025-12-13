@@ -107,6 +107,9 @@ void odom::update() {
     while (thetaDeg >= 180.0) thetaDeg -= 360.0;
     while (thetaDeg < -180.0) thetaDeg += 360.0;
 
+    // Debug print
+    pros::lcd::print(7, "X: %.2f, Y: %.2f, Theta: %.2f", globalX, globalY, thetaDeg);
+
     odomMutex.give(); // Unlock the mutex
 }
 

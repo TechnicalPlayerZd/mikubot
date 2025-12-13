@@ -35,15 +35,8 @@ pros::adi::DigitalOut solenoidC('C');
 extern pros::Mutex odomMutex; // Declare the mutex
 
 namespace robot {
-    void drive(double leftPower, double rightPower) {
-        // Directly set motor power (-127 to 127)
-        leftTop.move(leftPower);
-        leftMiddle.move(leftPower);
-        leftBack.move(leftPower);
-        rightTop.move(rightPower);
-        rightMiddle.move(rightPower);
-        rightBack.move(rightPower);
-    }
+    // Remove the drive function
+    // Remove the turnDegrees function
 
     void stop() {
         // Stop all motors by setting power to 0
@@ -55,94 +48,13 @@ namespace robot {
         rightBack.move(0);
     }
 
-    void drive(double distanceCm, int speed) {
-        const double wheelDiameterCm = 5.6; // Adjust based on your robot's wheel diameter
-        const double wheelCircumferenceCm = wheelDiameterCm * M_PI;
-        const double degreesPerCm = 360.0 / wheelCircumferenceCm;
-        
-
-        double targetDegrees = distanceCm * degreesPerCm;
-
-        leftTop.tare_position();
-        rightTop.tare_position();
-
-        leftTop.move_relative(targetDegrees, speed);
-        leftMiddle.move_relative(targetDegrees, speed);
-        leftBack.move_relative(targetDegrees, speed);
-        rightTop.move_relative(targetDegrees, speed);
-        rightMiddle.move_relative(targetDegrees, speed);
-        rightBack.move_relative(targetDegrees, speed);
-        leftTop.set_reversed(false);
-        leftMiddle.set_reversed(true);
-        leftBack.set_reversed(true);
-
-        rightTop.set_reversed(true);
-        rightMiddle.set_reversed(false);
-        rightBack.set_reversed(false);
-
-        while (std::fabs(leftTop.get_position()) < std::fabs(targetDegrees) ||
-               std::fabs(rightTop.get_position()) < std::fabs(targetDegrees)) {
-            pros::delay(10); // Wait until the target position is reached
-        }
-
-        stop(); // Stop the robot after reaching the target
-    }
-
     void intake(int speed) {
         intakeTop.move(speed);
         intakeMiddle.move(-speed);
         intakeBottom.move(-speed);
     }
 
-    void turnDegrees(double degrees, int speed) {
-        double targetAngle = odom::getTheta() + degrees;
-
-        // Normalize target angle to [-180, 180]
-        while (targetAngle > 180.0) targetAngle -= 360.0;
-        while (targetAngle < -180.0) targetAngle += 360.0;
-
-        while (true) {
-            double currentAngle = odom::getTheta();
-            double error = targetAngle - currentAngle;
-
-            // Normalize error to [-180, 180]
-            while (error > 180.0) error -= 360.0;
-            while (error < -180.0) error += 360.0;
-
-            if (std::fabs(error) < 1.0) break; // Stop when within 1 degree tolerance
-
-            int turnPower = (error > 0 ? speed : -speed);
-            drive(-turnPower, turnPower); // Turn in place
-
-            pros::delay(20);
-        }
-
-        stop(); // Stop the robot after turning
-    }
-
-    void drive(int speed, int duration) {
-        // Set motor directions
-        leftTop.set_reversed(false);
-        leftMiddle.set_reversed(true);
-        leftBack.set_reversed(true);
-        rightTop.set_reversed(true);
-        rightMiddle.set_reversed(false);
-        rightBack.set_reversed(false);
-
-        // Move motors at the specified speed
-        leftTop.move(speed);
-        leftMiddle.move(speed);
-        leftBack.move(speed);
-        rightTop.move(speed);
-        rightMiddle.move(speed);
-        rightBack.move(speed);
-
-        // Delay for the specified duration
-        pros::delay(duration);
-
-        // Stop motors
-        stop();
-    }
+    // ...existing code...
 }
 
 // === Operator Control (Drivetrain Test) ===
@@ -156,11 +68,13 @@ void robotOpcontrol() {
     rightMiddle.set_reversed(false);
     rightBack.set_reversed(false);
 
-    static bool solenoidStateA = false;
+    static bool solenoidStateA = true;
     static bool solenoidStateB = true;
     static bool solenoidStateC = false;
 
     while (true) {
+        solenoidB.set_value(solenoidStateB);
+        solenoidA.set_value(solenoidStateA);
         int leftPower = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightPower = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
 
@@ -183,12 +97,12 @@ void robotOpcontrol() {
                               (std::fabs(outtakeRearVelocity) < 5.0 || std::fabs(intakeBottomVelocity) < 5.0); // Low velocity
 
         // Solenoid controls
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-            solenoidStateC = !solenoidStateC;
-            solenoidC.set_value(solenoidStateC);
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            solenoidStateB = !solenoidStateB;
+            solenoidB.set_value(solenoidStateB);
         }
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) { // Middle Outtake
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) { // Middle Outtake
             if (isUnderTension) {
                 outtakeRear.move(127); // Reverse outtakeRear
                 intakeBottom.move(127); // Reverse intakeBottom
@@ -210,7 +124,7 @@ void robotOpcontrol() {
                 outtakeRear.move(-127);
                 solenoidA.set_value(false);
             }
-        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) { // Lower Outtake
+        } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) { // Lower Outtake
             if (isUnderTension) {
                 outtakeRear.move(127); // Reverse outtakeRear
                 intakeBottom.move(127); // Reverse intakeBottom
@@ -232,15 +146,6 @@ void robotOpcontrol() {
         // Add a small delay to prevent blocking other tasks
         pros::delay(20);
     }
-}
-
-void stop() {
-    leftTop.move(0);
-    leftMiddle.move(0);
-    leftBack.move(0);
-    rightTop.move(0);
-    rightMiddle.move(0);
-    rightBack.move(0);
 }
 
 void displayPosition() {
@@ -283,7 +188,14 @@ void displayOdometryOnBrain() {
 }
 
 void robotInitialize() {
-  pros::lcd::initialize(); // Initialize the LCD screen
-  odom::start();
-  pros::Task displayTask(displayOdometryOnBrain); // Start the display task
+    pros::lcd::initialize(); // Initialize the LCD screen
+    odom::start();
+
+    // Toggle solenoid B to ensure it is reset
+    solenoidB.set_value(false);
+    pros::delay(100); // Wait for 100ms to ensure the solenoid reacts
+    solenoidB.set_value(true); // Set solenoid B to false (turn down)
+
+    // Debug print to confirm the value is set
+    pros::lcd::print(0, "Solenoid B toggled and set to false");
 }
