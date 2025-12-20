@@ -8,7 +8,7 @@ namespace robot {
 
 // Simplified drive function for debugging
 void drive(double distanceCm, int speed) {
-    const double wheelDiameterCm = 5.6; // Adjust based on your robot's wheel diameter
+    const double time_tuning = 5.6; // Adjust to testing
     const double wheelCircumferenceCm = wheelDiameterCm * M_PI;
     const double degreesPerCm = 360.0 / wheelCircumferenceCm;
 
@@ -37,7 +37,7 @@ void drive(double distanceCm, int speed) {
     rightMiddle.move_velocity(speed);
     rightBack.move_velocity(speed);
 
-    pros::delay(2000); // Run motors for 2 seconds
+    pros::delay(distanceCm*time_tuning); // Run motors for the distance times a constant(testing)
 
     stop(); // Stop the robot after reaching the target
     pros::delay(500); // Add a delay to ensure the robot stops completely
@@ -45,7 +45,7 @@ void drive(double distanceCm, int speed) {
 
 // Simplified turnDegrees function for debugging
 void turnDegrees(double degrees, int speed) {
-    const double turnFactor = 5.6; // Adjust this factor based on your robot's turning behavior
+    const double turnFactor = 5.6 / 2.67; // Adjusted turn factor for accurate turning
     double targetTurnDegrees = degrees * turnFactor;
 
     leftTop.tare_position();
@@ -97,7 +97,7 @@ void autonomous() {
 
     // Follow the specified movements
     pros::lcd::print(1, "Starting drive 25.0 cm");
-    robot::drive(25.0, 100);
+    robot::drive(25.0 / 3.0, 100); // Ensure the first argument is a double
     pros::lcd::print(1, "Completed drive 25.0 cm");
     pros::delay(500); // Ensure the robot stops completely
 
@@ -107,7 +107,7 @@ void autonomous() {
     pros::delay(500); // Ensure the robot stops completely
 
     pros::lcd::print(3, "Starting drive 908.29 cm");
-    robot::drive(908.29, 100);
+    robot::drive(908.29 / 3.0, 100); // Ensure the first argument is a double
     pros::lcd::print(3, "Completed drive 908.29 cm");
     pros::delay(500); // Ensure the robot stops completely
 
@@ -117,7 +117,7 @@ void autonomous() {
     pros::delay(500); // Ensure the robot stops completely
 
     pros::lcd::print(5, "Starting drive 574.427 cm");
-    robot::drive(574.427, 100);
+    robot::drive(574.427 / 3.0, 100); // Ensure the first argument is a double
     pros::lcd::print(5, "Completed drive 574.427 cm");
     pros::delay(500); // Ensure the robot stops completely
 
