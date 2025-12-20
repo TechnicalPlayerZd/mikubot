@@ -26,6 +26,6 @@ void autonomous() {
 // Operator control function
 void opcontrol() {
   // Call the renamed robotOpcontrol function
-  / robot::autonomous();
-  robotOpcontrol();
+  robot::autonomous();
+  // robotOpcontrol();
 }

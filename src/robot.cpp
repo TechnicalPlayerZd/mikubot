@@ -68,13 +68,12 @@ void robotOpcontrol() {
     rightMiddle.set_reversed(false);
     rightBack.set_reversed(false);
 
-    static bool solenoidStateA = true;
+    static bool solenoidStateA = false;
     static bool solenoidStateB = true;
     static bool solenoidStateC = false;
 
     while (true) {
         solenoidB.set_value(solenoidStateB);
-        solenoidA.set_value(solenoidStateA);
         int leftPower = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightPower = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
 
@@ -146,6 +145,15 @@ void robotOpcontrol() {
         // Add a small delay to prevent blocking other tasks
         pros::delay(20);
     }
+}
+
+void stop() {
+    leftTop.move(0);
+    leftMiddle.move(0);
+    leftBack.move(0);
+    rightTop.move(0);
+    rightMiddle.move(0);
+    rightBack.move(0);
 }
 
 void displayPosition() {

@@ -7,7 +7,7 @@
 namespace robot {
 
 // Simplified drive function for debugging
-void drive(double distanceCm, int maxSpeed) {
+void drive(double distanceCm, int speed) {
     const double wheelDiameterCm = 5.6; // Adjust based on your robot's wheel diameter
     const double wheelCircumferenceCm = wheelDiameterCm * M_PI;
     const double degreesPerCm = 360.0 / wheelCircumferenceCm;
@@ -18,37 +18,33 @@ void drive(double distanceCm, int maxSpeed) {
     rightTop.tare_position();
 
     // Debug print
-    pros::lcd::print(0, "Driving %.2f cm at %d speed", distanceCm, maxSpeed);
+    pros::lcd::print(0, "Driving %.2f cm at %d speed", distanceCm, speed);
+    pros::lcd::print(1, "Target Degrees: %.2f", targetDegrees);
 
-    const double kP = 0.5; // Proportional constant (tune this value)
-    while (true) {
-        double leftPosition = leftTop.get_position();
-        double rightPosition = rightTop.get_position();
-        double averagePosition = (leftPosition + rightPosition) / 2.0;
+    // Set motor brake mode to coast
+    leftTop.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+    leftMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+    leftBack.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+    rightTop.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+    rightMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+    rightBack.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
 
-        double error = targetDegrees - averagePosition;
-        if (std::fabs(error) < 5) { // Stop if the error is small enough
-            break;
-        }
+    // Use move_velocity for debugging
+    leftTop.move_velocity(speed);
+    leftMiddle.move_velocity(speed);
+    leftBack.move_velocity(speed);
+    rightTop.move_velocity(speed);
+    rightMiddle.move_velocity(speed);
+    rightBack.move_velocity(speed);
 
-        int speed = std::clamp(static_cast<int>(error * kP), -maxSpeed, maxSpeed);
-
-        leftTop.move_velocity(speed);
-        leftMiddle.move_velocity(speed);
-        leftBack.move_velocity(speed);
-        rightTop.move_velocity(speed);
-        rightMiddle.move_velocity(speed);
-        rightBack.move_velocity(speed);
-
-        pros::delay(10); // Small delay for control loop
-    }
+    pros::delay(2000); // Run motors for 2 seconds
 
     stop(); // Stop the robot after reaching the target
     pros::delay(500); // Add a delay to ensure the robot stops completely
 }
 
 // Simplified turnDegrees function for debugging
-void turnDegrees(double degrees, int maxSpeed) {
+void turnDegrees(double degrees, int speed) {
     const double turnFactor = 5.6; // Adjust this factor based on your robot's turning behavior
     double targetTurnDegrees = degrees * turnFactor;
 
@@ -56,31 +52,23 @@ void turnDegrees(double degrees, int maxSpeed) {
     rightTop.tare_position();
 
     // Debug print
-    pros::lcd::print(0, "Turning %.2f degrees at %d speed", degrees, maxSpeed);
+    pros::lcd::print(0, "Turning %.2f degrees at %d speed", degrees, speed);
 
-    const double kP = 0.5; // Proportional constant (tune this value)
-    while (true) {
-        double leftPosition = leftTop.get_position();
-        double rightPosition = rightTop.get_position();
+    leftTop.move_relative(-targetTurnDegrees, speed);
+    leftMiddle.move_relative(-targetTurnDegrees, speed);
+    leftBack.move_relative(-targetTurnDegrees, speed);
+    rightTop.move_relative(targetTurnDegrees, speed);
+    rightMiddle.move_relative(targetTurnDegrees, speed);
+    rightBack.move_relative(targetTurnDegrees, speed);
 
-        double leftError = -targetTurnDegrees - leftPosition;
-        double rightError = targetTurnDegrees - rightPosition;
-
-        if (std::fabs(leftError) < 5 && std::fabs(rightError) < 5) { // Stop if the error is small enough
-            break;
-        }
-
-        int leftSpeed = std::clamp(static_cast<int>(leftError * kP), -maxSpeed, maxSpeed);
-        int rightSpeed = std::clamp(static_cast<int>(rightError * kP), -maxSpeed, maxSpeed);
-
-        leftTop.move_velocity(leftSpeed);
-        leftMiddle.move_velocity(leftSpeed);
-        leftBack.move_velocity(leftSpeed);
-        rightTop.move_velocity(rightSpeed);
-        rightMiddle.move_velocity(rightSpeed);
-        rightBack.move_velocity(rightSpeed);
-
-        pros::delay(10); // Small delay for control loop
+    uint32_t startTime = pros::millis();
+    while ((std::fabs(leftTop.get_position()) < std::fabs(targetTurnDegrees) ||
+            std::fabs(rightTop.get_position()) < std::fabs(targetTurnDegrees)) &&
+           (pros::millis() - startTime < 5000)) { // Timeout after 5 seconds
+        // Debug current motor positions
+        pros::lcd::print(1, "Left Pos: %.2f", leftTop.get_position());
+        pros::lcd::print(2, "Right Pos: %.2f", rightTop.get_position());
+        pros::delay(10); // Wait until the target position is reached
     }
 
     stop(); // Stop the robot after turning
